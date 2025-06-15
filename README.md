@@ -15,9 +15,9 @@ Based on the data obtained from a portal with advertisements with the sale of ap
 
 # Data used in the project:
 The data for the project was taken from otodom.pl, a Polish website where users post ads for apartment sales.<br>
-The data is from January 2024.
+The data is from January 2024.<br>
 The following were not used:
 * data from photos 
 * information provided in the verbal description given by the advertiser
-* data about the distance of the apartment to various amenities (bus stops, stores, schools, etc.)<br>&nbsp
+* data about the distance of the apartment to various amenities (bus stops, stores, schools, etc.)<br>&nbsp;
 Instead, information describing the locality (population, population density, and powiat rights of city) was added. The powiat is a unit of local government and administrative division of the second degree in Poland. A city with powiat rights is the center of such a unit
