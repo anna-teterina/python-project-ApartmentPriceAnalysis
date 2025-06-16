@@ -13,7 +13,7 @@ Based on the data obtained from a portal with advertisements with the sale of ap
 <ol>
 <li>Transformation of data for modeling - transformation, analysis of gaps and outlier observations, selection of data for modeling and addition of data extracted from the address in the advertisement</li>
 <li>Model training - appropriate coding of data, model selection and model training</li>
-<li>Feature importance analysis (lokal)  - calculations with the help of a SHAP library and presentation on a graph</li>
+<li>Feature importance analysis (lokal)  - calculations with the help of a SHAP package and presentation on a graph</li>
 <li>Creation of a report with a summary of the modeling result - visualization of model result and features importance</li>
 </ol>
 
@@ -26,7 +26,6 @@ The following were <b>not</b> used:
 <li>information provided in the verbal description given by the advertiser</li>
 <li>data about the distance of the apartment to various amenities (bus stops, stores, schools, etc.)</li>
 </ul>
-<br>
 Instead, information describing the locality (population, population density, and powiat rights of city) was added.<br><i>The powiat is a unit of local government and administrative division of the second degree in Poland. A city with powiat rights is the center of such a unit.</i>
 
 ## Project result
