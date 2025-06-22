@@ -157,7 +157,7 @@ def process_floor_data(data):
                                         data['number_floor_in_building'], 
                                         data['ap_floor'])
     # Convert apartment floor to float
-    data['ap_floor'] = pd.to_numeric(data['ap_floor'])
+    data['ap_floor'] = data['ap_floor'].astype('float')
     
     # Drop original 'floor' column
     data = data.drop('floor', axis=1)
@@ -233,7 +233,7 @@ def convert_year_to_int(data):
         DataFrame with 'year' column converted to nullable integer dtype.
     """
     
-    data['year'] = pd.to_numeric(data['year']).astype('Int64')
+    data['year'] = data['year'].astype('Int64')
     
     return data
 
@@ -545,7 +545,7 @@ def city_info_transform (data):
     # Categorize population density into 8 bins (step = 500)
     locations_data['pop_dens_cat'] = pd.cut(
         locations_data['Gęstość zaludnienia'],
-        bins=range(1, 4001, 500),
+        bins=range(1, 4002, 500),
         labels=np.arange(0, 8)
     )
     
