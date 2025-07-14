@@ -628,3 +628,284 @@ def preliminary_transform (data, train_dataset):
     city_info_transformed_data = city_info_transform(location_transformed_data)
     
     return city_info_transformed_data
+
+def replace_mistakes_with_na(data):
+    
+    """
+    Cleans data by replacing obviously incorrect or implausible values in selected numerical columns with NaN.
+
+    Specifically:
+    - Replaces values in the 'area' column below 10 and above 500 with NaN,
+      as these are likely due to data entry errors.
+    - Replaces values above 100 in 'number_floor_in_building' and 'ap_floor' with NaN,
+      as these are likely due to data entry errors.
+    - Replaces values in the 'year' column below 1700 with NaN, assuming such years are invalid
+      for apartment construction.
+
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The input dataset to be cleaned.
+
+    Returns:
+    --------
+    data_clean : pd.DataFrame
+        The cleaned dataset with incorrect values replaced by NaN.
+    """
+
+    # Create copy of the original dataset to avoid modifying it in-place
+    data_clean = data.copy()
+    
+    # Set area information with area above 500 or below 10 to NaN
+    data_clean['area'] = (
+        data_clean['area']
+        .apply(lambda x: x if pd.isna(x) or (x <= 500 and x >= 10) else np.nan)
+    )
+    data_clean['area'] = pd.to_numeric(data_clean['area'])
+
+    # Set floor information with floor number above 100 to NaN
+    data_clean['number_floor_in_building'] = (
+        data_clean['number_floor_in_building']
+        .apply(lambda x: x if pd.isna(x) or x <= 100 else np.nan)
+    )
+    data_clean['number_floor_in_building'] = pd.to_numeric(data_clean['number_floor_in_building'])
+
+    data_clean['ap_floor'] = (
+        data_clean['ap_floor']
+        .apply(lambda x: x if pd.isna(x) or x <= 100 else np.nan)
+    )
+    data_clean['ap_floor'] = pd.to_numeric(data_clean['ap_floor'])
+
+    # Set construction years below 1700 to NaN
+    data_clean['year'] = (
+        data_clean['year']
+        .apply(lambda x: x if pd.isna(x) or x >= 1700 else np.nan)
+    )
+    data_clean['year'] = pd.to_numeric(data_clean['year']).astype('Int64')
+    
+    return data_clean
+
+def clean_missing_values(data, train_dataset, variables_to_drop_na):
+
+    """
+    Replaces specified outlier or rare category values in all columns of the dataset with a general label 'inny' (Polish for "other").
+
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The input dataset containing categorical variables.
+
+    categories_to_replace : list of str
+        A list of category values (strings) that should be considered outliers or rare,
+        and replaced with the label 'inny' (Polish for "other").
+
+    Returns:
+    --------
+    data_clean : pd.DataFrame
+        A cleaned version of the input dataset with specified category values replaced by 'inny'.
+    """
+    
+    # Create copy of the original dataset to avoid modifying it in-place
+    data_clean_missing = data.copy()
+    
+    # Remove rows with NA values in the specified columns
+    data_clean_missing = data_clean_missing.dropna(subset = variables_to_drop_na)
+    
+    # If this is test data, print a message about removed rows due to missing values
+    if not train_dataset:
+        if len(data) > len(data_clean_missing):
+            print("""
+                  W zbiorze wystąpiły braki w cechach: 'typ budynku', 'powierzchnia',
+                  'liczba pokoi', 'rynek', 'ogłoszeniodawca', 'miasto', 'województwo'.
+                  Do otrzymania prognozy wszystkie z powyższych cech
+                  muszą być wypełnione.
+                  Obserwacje te zostały usunięte ze zbioru do predykcji.
+                  """)    
+    
+    return data_clean_missing
+
+def proceed_outlier_categories(data, categories_to_replace):
+    
+    """
+    Replaces outlier category values in the dataset with a general label 'inny'.
+
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The input dataset containing categorical variables.
+    
+    categories_to_replace : list
+        A list of categories values
+        that should be replaced with the label 'inny' (Polish for "other").
+
+    Returns:
+    --------
+    data_clean : pd.DataFrame
+        A cleaned version of the input dataset with specified category values replaced.
+    """
+
+    # Create copy of the original dataset to avoid modifying it in-place
+    data_clean = data.copy()
+    
+    # Replace rare or inconsistent category values with 'inny' (Polish for "other")
+    data_clean = data_clean.replace(categories_to_replace, 'inny')
+    
+    return data_clean
+
+def proceed_outliers(data, train_dataset,
+                     minprice, maxprice,
+                     minarea, maxarea,
+                     maxfloor, minyear,
+                     to_delete_from_test_set):
+    
+    """
+    Filters out observations that are likely outliers based on provided thresholds 
+    for selected numerical features such as price, area, floor level, and year of construction.
+
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The input dataset containing apartment listings.
+
+    train_dataset : bool
+        Indicates whether the data is used for training (True) or inference/prediction (False).
+
+    minprice : float
+        Minimum acceptable price. Listings with a lower price are considered outliers.
+
+    maxprice : float
+        Maximum acceptable price. Listings with a higher price are considered outliers.
+
+    minarea : float
+        Minimum acceptable area (m²). Listings with a smaller area are considered outliers.
+
+    maxarea : float
+        Maximum acceptable area (m²). Listings with a larger area are considered outliers.
+
+    maxfloor : int
+        Maximum acceptable floor level. Higher floor numbers are treated as outliers.
+
+    minyear : int
+        Minimum acceptable construction year. Years below this threshold are treated as invalid.
+        
+    to_delete_from_test_set : bool
+        Indicates whether outlier observations will remain in the test set or be removed.
+        
+    Returns:
+    --------
+    pd.DataFrame
+        Cleaned dataset with extreme values filtered out (if `train_dataset=True`) 
+        or the original dataset with a warning printed about outliers (if `train_dataset=False`).
+    """
+
+    # Create copy of the original dataset to avoid modifying it in-place
+    data_clean = data.copy()
+    
+    # Filter observations based on price range
+    data_clean = data_clean[data_clean['price'] <= maxprice]
+    data_clean = data_clean[data_clean['price'] >= minprice]
+    
+    # Filter observations based on area range
+    data_clean = data_clean[
+        (data_clean['area'] <= maxarea) |
+        (data_clean['area'].isna())
+    ]
+    data_clean = data_clean[
+        (data_clean['area'] >= minarea)|
+        (data_clean['area'].isna())
+    ]
+    
+    # Filter based on floor information (if not missing)
+    data_clean = data_clean[
+        (data_clean['number_floor_in_building'] <= maxfloor) | 
+        (data_clean['number_floor_in_building'].isna())
+    ]
+    data_clean = data_clean[
+        (data_clean['ap_floor'] <= maxfloor) |
+        (data_clean['ap_floor'].isna())
+    ]
+
+    # Filter based on year of building information
+    data_clean = data_clean[
+        (data_clean['year'] >= minyear) |
+        (data_clean['year'].isna())
+    ]
+    
+    if train_dataset:
+        # For training data, return only the cleaned records
+        return data_clean
+    else:
+        # For inference data, return full data but warn about outliers
+        if len(data) > (len(data_clean) + sum(data['price'].isna())):
+            if not to_delete_from_test_set:
+                print("""
+                      W zbiorze wystąpiły obserwację o skrajnych wartościach
+                      ze względu na zaproponowaną cenę, powierzchnię, piętro lub rok budynku.
+                      Może zmniejszeć dokładność prognozy.
+                      """)
+                return data
+            else:
+                print("""
+                      W zbiorze wystąpiły obserwację o skrajnych wartościach
+                      ze względu na zaproponowaną cenę, powierzchnię, piętro lub rok budynku.
+                      Obserwacje te zostały usunięte ze zbioru do predykcji.
+                      """)
+                return data_clean
+            
+def cleaning_data (data, train_dataset, to_delete_from_test_set = True):
+    
+    """
+    Applies a sequence of data cleaning operations on a dataset, including:
+    1. `replaced_mistakes_data` - Replacing clearly incorrect numerical values with missing values
+    2. `cleaned_missind_values_data` - Dropping observations with missing values in key variables
+    3. `proceeded_outlier_cat_data` - Replacing rare categorical values
+    4. `procceded_outliers_data` - Removing outliers based on defined thresholds
+
+    Parameters:
+    -----------
+    data : pd.DataFrame
+        The input dataset to be cleaned.
+
+    train_dataset : bool
+        Indicates whether the data is used for model training (True)
+        or for inference/prediction (False). This affects how aggressively outliers and missing data are removed.
+        
+    to_delete_from_test_set : bool
+        Indicates whether outlier observations will remain in the test set or be removed. Default is set to True.
+        
+    Returns:
+    --------
+    pd.DataFrame
+        Cleaned dataset after all preprocessing steps.
+    """
+    
+    # Load thresholds and rules for outlier and missing value handling from file
+    outlier_values_dict = joblib.load("1. Data Preparation/outlier_values_dict.joblib")
+    
+    variables_to_drop_na = outlier_values_dict["variables_to_drop_na"]
+    categories_to_replace = outlier_values_dict["categories_to_replace"]
+    minprice = outlier_values_dict["min_price"]
+    maxprice = outlier_values_dict["max_price"]
+    minarea = outlier_values_dict["min_area"]
+    maxarea = outlier_values_dict["max_area"]
+    maxfloor = outlier_values_dict["max_floor"]
+    minyear = outlier_values_dict["min_year"]
+    
+    # Replace implausible or erroneous numeric values with NaN
+    replaced_mistakes_data = replace_mistakes_with_na(data)
+    
+    # Drop observations with missing values in critical variables
+    cleaned_missind_values_data = clean_missing_values(replaced_mistakes_data, train_dataset, variables_to_drop_na)
+    
+    # Replace rare categorical values with a standard label
+    proceeded_outlier_cat_data = proceed_outlier_categories(cleaned_missind_values_data, categories_to_replace)
+    
+    # Remove or flag outliers based on provided thresholds
+    procceded_outliers_data = proceed_outliers(proceeded_outlier_cat_data,
+                                               train_dataset,
+                                               minprice, maxprice,
+                                               minarea, maxarea,
+                                               maxfloor, minyear,
+                                               to_delete_from_test_set)
+    
+    return procceded_outliers_data
