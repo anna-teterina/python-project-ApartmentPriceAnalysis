@@ -9,7 +9,7 @@ import os
 
 np.set_printoptions(suppress=False)
 
-work_dir = r'C:\Users\User\Desktop\python-project-ApartmentPriceAnalysis'
+work_dir = r'C:\Users\krasavica\Desktop\Projekty - DS\python-project-ApartmentPriceAnalysis'
 os.chdir(work_dir)
 
 def standardize_missing_values(data):
@@ -38,7 +38,7 @@ def standardize_missing_values(data):
         'brak informacji' # 'no information'
         ]
     
-    return data.replace(missing_placeholders, np.NaN)
+    return data.replace(missing_placeholders, np.nan)
 
 def clean_numeric_columns(data):
     
@@ -148,7 +148,11 @@ def process_floor_data(data):
     """
     
     # Extract apartment floor (left part before '/'), convert special names
-    data['number_floor_in_building'] = data['floor'].apply(lambda x: str(x).split('/')[1] if str(x).__contains__('/') else np.NaN).astype('float')
+    data['number_floor_in_building'] = (
+        data['floor']
+        .apply(lambda x: str(x).split('/')[1] if str(x).__contains__('/') else np.nan)
+        .astype('float')
+        )
     data['ap_floor'] = data['floor'].apply(lambda x: str(x).split('/')[0]).replace({'parter':'0',
                                                                                     'suterena':'0',
                                                                                     '> 10': None})
@@ -471,7 +475,7 @@ def location_transform(data):
     locations = locations[locations['Rodzaj'].isin(valid_types)]
 
     # Group places by region (voivodeship)
-    locations = locations.groupby('Województwo', axis=0)
+    locations = locations.groupby('Województwo')
 
     # Create a dictionary: region -> list of cities/villages in that region
     cities_dict = {}
