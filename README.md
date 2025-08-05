@@ -30,6 +30,17 @@ Instead, information describing the locality (population, population density, an
 
 ## Project result
 The precision of the model was about <b>83.4%</b> for the test data. This result was considered satisfactory for the data used and the complexity of the real estate valuation process. <br>
+The prediction report is created based on the data from the filled questionnaire: https://forms.gle/Tixf4AexZiijdTAE6<br>
+In order to obtain such a report after completing the questionnaire, you need to let go of the code on file: <b>price_predictor.ipynb</b>
 Example of the final report:
 ![alt text](final_report_example.png)<br>
 <i>The report was created for Polish users, so it is in Polish</i>
+
+## Other notes
+The project focused most on data processing and modeling. Creating the report and the way the recipient entered the data were secondary goals, so these aspects could be improved in further development of the project.<br>
+In the file organization, special care was taken to ensure that the same code and functions were not duplicated too often in different files, and that frequently used dictionaries were saved. As a result, throughout the project, situations where code repeats itself more than 2 times were avoided. Typically, the first time functions were defined in the environment where they can be tested, and the second time as part of the pipeline. In this way, the code was very easy to improve and avoid errors in changes.
+
+## For future improvement
+As mentioned above in the future, the design can be improved by creating an interface for the user and creating a more secure way to store the data so that a lot of users can use the prediction at the same time.<br>
+In addition, in the future, data can be re-collected and the model can be trained on new data, just as prices in the real estate market are changing all the time. Other modeling methods may be tried as well.<br>
+New other factors also may be added to the analysis. Such a model can also be created for local markets, where such factors may be more specific.
