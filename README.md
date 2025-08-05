@@ -31,7 +31,7 @@ Instead, information describing the locality (population, population density, an
 ## Project result
 The precision of the model was about <b>83.4%</b> for the test data. This result was considered satisfactory for the data used and the complexity of the real estate valuation process. <br>
 The prediction report is created based on the data from the filled questionnaire: https://forms.gle/Tixf4AexZiijdTAE6<br>
-In order to obtain such a report after completing the questionnaire, you need to let go of the code on file: <b>price_predictor.ipynb</b>
+In order to obtain such a report after completing the questionnaire, you need to let go of the code on file: <b>price_predictor.ipynb</b><br>
 Example of the final report:
 ![alt text](final_report_example.png)<br>
 <i>The report was created for Polish users, so it is in Polish</i>
