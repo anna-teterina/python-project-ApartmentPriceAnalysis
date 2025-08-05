@@ -1078,56 +1078,126 @@ def run_display(info_obj, map_obj, res_obj, f_imp_obj):
     # Display both images vertically using a VBox layout
     display(widgets.HBox([widgets.VBox([res_widget, f_imp_widget]), widgets.VBox([info_widget, map_widget])]))
 
-def load_data(number_of_filled_questionnaire = 1):
+def load_data(number_of_filled_questionnaire=1):
 
+    """
+    Loads the latest apartment listing data submitted via an online Google Form.
+
+    Parameters:
+    -----------
+    number_of_filled_questionnaire : int, optional (default=1)
+        The number of most recent questionnaire entries to return.
+        For example, set to 1 to get only the latest submission.
+
+    Returns:
+    --------
+    pd.DataFrame
+        A pandas DataFrame containing the requested number of latest entries,
+        with standardized column names in English.
+    """
+
+    # URL to the Google Sheet export in CSV format
     url = "https://docs.google.com/spreadsheets/d/1tzTdAB4E1p5Ep3QN_oFAEDrxWCitwl02Hnc3lOEO2Dw/export?format=csv"
+
+    # Load the spreadsheet data into a pandas DataFrame
     df = pd.read_csv(url)
-    column_names_dict = {'Cena podana w ogłoszeniu': 'price',
-                     'Adres mieszkania': 'address',
-                     'Powierzchnia': 'area',
-                     'Liczba pokoi': 'num_rooms',
-                     'Piętro': 'floor',
-                     'Miesięczny czynsz': 'rent',
-                     'Forma własności': 'ownership_status',
-                     'Stan wykończenia': 'flat_condition',
-                     'Balkon/Taras/Ogródek': 'perks',
-                     'Miejsce parkingowe': 'parking',
-                     'Ogrzewanie': 'heating',
-                     'Rynek': 'market',
-                     'Ogłoszeniodawca': 'ad_type',
-                     'Rok budynku': 'year',
-                     'Typ zabudowy': 'devel_type',
-                     'Materiał okien': 'windows',
-                     'Czy w budynku jest winda?': 'lift',
-                     'Materiał budynku': 'mater',
-                     'Media': 'utilities',
-                     'Bezpieczeństwo': 'security',
-                     'Wyposażenie': 'equipment',
-                     'Dodatkowe udogodnienia': 'add_inf'}
+
+    # Mapping of original Polish column names to standardized English variable names
+    column_names_dict = {
+        'Cena podana w ogłoszeniu': 'price',
+        'Adres mieszkania': 'address',
+        'Powierzchnia': 'area',
+        'Liczba pokoi': 'num_rooms',
+        'Piętro': 'floor',
+        'Miesięczny czynsz': 'rent',
+        'Forma własności': 'ownership_status',
+        'Stan wykończenia': 'flat_condition',
+        'Balkon/Taras/Ogródek': 'perks',
+        'Miejsce parkingowe': 'parking',
+        'Ogrzewanie': 'heating',
+        'Rynek': 'market',
+        'Ogłoszeniodawca': 'ad_type',
+        'Rok budynku': 'year',
+        'Typ zabudowy': 'devel_type',
+        'Materiał okien': 'windows',
+        'Czy w budynku jest winda?': 'lift',
+        'Materiał budynku': 'mater',
+        'Media': 'utilities',
+        'Bezpieczeństwo': 'security',
+        'Wyposażenie': 'equipment',
+        'Dodatkowe udogodnienia': 'add_inf'
+    }
+
+    # Rename the columns for consistency and easier processing
     df = df.rename(columns=column_names_dict)
 
-    return df.iloc[-number_of_filled_questionnaire:,]
+    # Return only the last N submitted entries
+    return df.iloc[-number_of_filled_questionnaire:]
 
-def production_function(number_of_filled_questionnaire, to_delete_outliers = True):
 
+def production_function(number_of_filled_questionnaire, to_delete_outliers=True):
+    """
+    Runs the full prediction and visualization pipeline for user-submitted apartment listings.
+
+    Parameters:
+    -----------
+    number_of_filled_questionnaire : int
+        Number of the latest questionnaire entries to retrieve and process from the form data.
+
+    to_delete_outliers : bool, optional (default=True)
+        Whether to remove observations with extreme values from the prediction set.
+        If False, outliers will be kept but a warning will be displayed.
+
+    Workflow:
+    ---------
+    1. Loads the most recent apartment listing data submitted via the questionnaire.
+    2. Transforms the raw input data using the preliminary transformation pipeline.
+    3. Prepares the data for modeling, optionally removing outliers.
+    4. Loads a pre-trained machine learning model.
+    5. For each listing:
+        a. Creates a summary info panel.
+        b. Generates an interactive location map.
+        c. Computes feature importance (SHAP) explanations.
+        d. Generates and displays the prediction result.
+
+    Returns:
+    --------
+    None
+        The function performs visualizations using IPython widgets but does not return any value.
+    """
+
+    # Step 1: Load raw user-submitted data from the Google Form
     data_initial = load_data(number_of_filled_questionnaire)
 
-    data_for_analysis = module.preliminary_transform(data_initial, train_dataset = False)
+    # Step 2: Run preliminary preprocessing (feature engineering, cleaning, etc.)
+    data_for_analysis = module.preliminary_transform(data_initial, train_dataset=False)
 
-    X, y = prepare_production_modeling_data(data_for_analysis, to_delete_outliers = to_delete_outliers)
+    # Step 3: Prepare modeling features and targets (X, y), with optional outlier removal
+    X, y = prepare_production_modeling_data(data_for_analysis, to_delete_outliers=to_delete_outliers)
 
+    # Step 4: Load pre-trained regression or classification model
     model = joblib.load("production_pipeline_objects/trained_model.joblib")
 
+    # Step 5: Generate and display prediction results for each input observation
     for i in range(len(data_initial)):
+        # Generate formatted information panel (text-based)
         info_obj = data_for_showing(data_initial.iloc[i], data_for_analysis.iloc[i])
         plt.close()
+
+        # Generate interactive map for the address
         map_obj = show_location(data_initial.iloc[i]["address"])
         plt.close()
+
+        # Compute feature importance (SHAP values) for the input observation
         f_imp_obj, shap_values = feature_imp_report(X.iloc[[i]], model)
         plt.close()
+
+        # Visualize the predicted price and SHAP impact values
         res_obj = pred_result_show(y.iloc[i], shap_values)
-        
+
+        # Display all outputs together (info panel, map, prediction, SHAP)
         run_display(info_obj, map_obj, res_obj, f_imp_obj)
+
 
 
 
