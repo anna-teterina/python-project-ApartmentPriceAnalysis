@@ -72,6 +72,7 @@ def clean_numeric_columns(data):
             .astype(str)                              
             .str.replace('[ a-zA-ZłŁ²]*', '', regex=True)
             .str.replace(',', '.', regex=False)
+            .str.replace(r'\s+', '', regex=True)
         )
         
         data[var] = pd.to_numeric(data[var])
@@ -554,7 +555,7 @@ def city_info_transform (data):
     )
     
     # Merge with the main dataset using location and region
-    data_merged = data.loc[:, 'link':'street/district'].merge(
+    data_merged = data.loc[:, :'street/district'].merge(
         locations_data,
         left_on=['location', 'region'],
         right_on=['Miasto', 'Województwo'],
@@ -855,6 +856,8 @@ def proceed_outliers(data, train_dataset,
                       Obserwacje te zostały usunięte ze zbioru do predykcji.
                       """)
                 return data_clean
+        # No outliers detected: return the original data
+        return data
             
 def cleaning_data (data, train_dataset, to_delete_from_test_set = True):
     

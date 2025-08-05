@@ -29,7 +29,7 @@ The following were <b>not</b> used:
 Instead, information describing the locality (population, population density, and powiat rights of city) was added.<br><i>The powiat is a unit of local government and administrative division of the second degree in Poland. A city with powiat rights is the center of such a unit.</i>
 
 ## Project result
-The precision of the model was about <b>84%</b> for the test data. This result was considered satisfactory for the data used and the complexity of the real estate valuation process. <br>
+The precision of the model was about <b>83.4%</b> for the test data. This result was considered satisfactory for the data used and the complexity of the real estate valuation process. <br>
 Example of the final report:
 ![alt text](final_report_example.png)<br>
 <i>The report was created for Polish users, so it is in Polish</i>
